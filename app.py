@@ -225,7 +225,12 @@ if st.button("🚀 Run Cloud Simulation Engine", use_container_width=True):
             oc.eval("graphics_toolkit gnuplot")
             oc.eval("page_screen_output(0);")
             
-            oc.eval("battle_prog")
+            # 2. FIXED CALL: Read and evaluate battle_prog directly as a script file execution
+            try:
+                oc.run("battle_prog.m")
+            except Exception as script_err:
+                # Fallback alternative method if Octave's engine path variable is strict
+                oc.feval("battle_prog")
             
             try:
                 oc.eval("print('temp_plot.png', '-dpng', '-r150');")
