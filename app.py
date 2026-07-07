@@ -192,17 +192,23 @@ with c_cfg2:
 
 with c_cfg3:
     t_val = st.selectbox("Monte Carlo Iterations (t)", options=[5, 10, 20, 30, 40, 50], index=0)
-
+    
 # ------------------------------------------------------------------
 # 🚀 ONLINE EXECUTION ENGINE
 # ------------------------------------------------------------------
-matlab_content = f"""Sa = [{p_inf_atk}; {o_inf_atk}; {p_inf_let}; {o_inf_let}; {p_cav_atk}; {o_cav_atk}; {p_cav_let}; {o_cav_let}; {p_arc_atk}; {o_arc_atk}; {p_arc_let}; {o_arc_let}];
-Sd = [{p_inf_def}; {o_inf_def}; {p_inf_hp}; {o_inf_hp}; {p_cav_def}; {o_cav_def}; {p_cav_hp}; {o_cav_hp}; {p_arc_def}; {o_arc_def}; {p_arc_hp}; {o_arc_hp}];
+# Build the matrix rows explicitly to prevent multi-line f-string string crashes
+matlab_content = (
+    f"Sa = [{p_inf_atk}; {o_inf_atk}; {p_inf_let}; {o_inf_let}; {p_cav_atk}; {o_cav_atk}; {p_cav_let}; {o_cav_let}; {p_arc_atk}; {o_arc_atk}; {p_arc_let}; {o_arc_let}];\n"
+    f"Sd = [{p_inf_def}; {o_inf_def}; {p_inf_hp}; {o_inf_hp}; {p_cav_def}; {o_cav_def}; {p_cav_hp}; {o_cav_hp}; {p_arc_def}; {o_arc_def}; {p_arc_hp}; {o_arc_hp}];\n\n"
+    f"Inf_att     = [ {p_inf} ; {p_inf_tier} ; {p_inf_tg} ; 1 ];\n"
+    f"Cav_att     = [ {p_cav} ; {p_cav_tier} ; {p_cav_tg} ; 5 ];\n"
+    f"Arch_att    = [ {p_arch} ; {p_arch_tier} ; {p_arch_tg} ; 9 ];\n\n"
+    f"Inf_def     = [ {o_inf} ; {o_inf_tier} ; {o_inf_tg} ; 1 ];\n"
+    f"Cav_def     = [ {o_cav} ; {o_cav_tier} ; {o_cav_tg} ; 5 ];\n"
+    f"Arch_def    = [ {o_arch} ; {o_arch_tier} ; {o_arch_tg} ; 9 ];\n\n"
+    f"rally = {rally_val};\n"
+    f"t = {t_val};\n"
+)
 
-Inf_att     = [ {p_inf} ; {p_inf_tier} ; {p_inf_tg} ; 1 ];
-Cav_att     = [ {p_cav} ; {p_cav_tier} ; {p_cav_tg} ; 5 ];
-Arch_att    = [ {p_arch} ; {p_arch_tier} ; {p_arch_tg} ; 9 ];
-
-Inf_def     = [ {o_inf} ; {o_inf_tier} ; {o_inf_tg} ; 1 ];
-Cav_def     = [ {o_cav} ; {o_cav_tier} ; {o_cav_tg} ; 5 ];
-Arch_def    =
+st.markdown("---")
+if st.button("🚀 Run Cloud Simulation Engine", use_container_width=True):
