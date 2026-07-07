@@ -1,0 +1,1 @@
+& "C:\Users\abhis\AppData\Local\Programs\Python\Python312\python.exe" -m streamlit run "C:\Users\abhis\Desktop\Kingshot\test\codes\battle files\battle\app.py"

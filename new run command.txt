@@ -1,0 +1,2 @@
+pip install streamlit oct2py matplotlib
+streamlit run app.py
