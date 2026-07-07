@@ -212,3 +212,32 @@ matlab_content = (
 
 st.markdown("---")
 if st.button("🚀 Run Cloud Simulation Engine", use_container_width=True):
+    try:
+        # Save structural properties locally for compilation read triggers
+        with open("simulation_input.m", "w") as f:
+            f.write(matlab_content)
+            
+        with st.spinner("Executing simulation on cloud servers..."):
+            oc = Oct2Py()
+            oc.eval("addpath('.')")
+            
+            # Linux server compatible headless plotting config
+            oc.eval("graphics_toolkit gnuplot")
+            oc.eval("page_screen_output(0);")
+            
+            oc.eval("battle_prog")
+            
+            try:
+                oc.eval("print('temp_plot.png', '-dpng', '-r150');")
+                if os.path.exists("temp_plot.png"):
+                    st.subheader("📊 Performance Matrix Results")
+                    st.image("temp_plot.png", use_container_width=True)
+                    os.remove("temp_plot.png")
+            except Exception as plot_err:
+                st.warning(f"Calculations completed, but plot rendering was skipped: {plot_err}")
+
+            st.success("🎉 Simulation run finalized successfully.")
+            oc.exit()
+            
+    except Exception as e:
+        st.error(f"❌ Execution crashed: {e}")
