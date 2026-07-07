@@ -7,7 +7,6 @@ Injury_rate = 0.35;          %add rates change when needed
 %molten_fort                                 %test input files with stats and troop values/tiers
 %testno2
 
-simulation_input.m                          % streamlit test input
 
 troops_stat_maker       %calling the stat analyzer and making att and def stats and troop size
 

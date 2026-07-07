@@ -1,8 +1,6 @@
 import streamlit as st
 import os
 import re
-
-# We remove the hardcoded H:/ path entirely for cloud compatibility!
 from oct2py import Oct2Py
 
 st.set_page_config(page_title="Battle Engine Simulator", layout="wide")
@@ -186,6 +184,9 @@ with c_cfg1:
     rally_val = 1 if rally_bool else 0
     if rally_bool:
         st.warning("⚠️ Note: Rally mode is not implemented yet. Better formations will not be calculated.")
+    
+    # NEW OPTION CHECKMARK
+    use_defender_modifiers = st.checkbox("Include Custom Defender Modifiers in Calculation Matrix", value=True)
 
 with c_cfg2:
     sparsity_val = st.selectbox("Sparsity Multiplier", options=[0.03, 0.06, 0.09, 0.12], index=0)
@@ -194,9 +195,8 @@ with c_cfg3:
     t_val = st.selectbox("Monte Carlo Iterations (t)", options=[5, 10, 20, 30, 40, 50], index=0)
     
 # ------------------------------------------------------------------
-# 🚀 ONLINE EXECUTION ENGINE
+# 🚀 COMPILE CONFIG DATA STRUCT
 # ------------------------------------------------------------------
-# Build the matrix rows explicitly to prevent multi-line f-string string crashes
 matlab_content = (
     f"Sa = [{p_inf_atk}; {o_inf_atk}; {p_inf_let}; {o_inf_let}; {p_cav_atk}; {o_cav_atk}; {p_cav_let}; {o_cav_let}; {p_arc_atk}; {o_arc_atk}; {p_arc_let}; {o_arc_let}];\n"
     f"Sd = [{p_inf_def}; {o_inf_def}; {p_inf_hp}; {o_inf_hp}; {p_cav_def}; {o_cav_def}; {p_cav_hp}; {o_cav_hp}; {p_arc_def}; {o_arc_def}; {p_arc_hp}; {o_arc_hp}];\n\n"
@@ -210,28 +210,77 @@ matlab_content = (
     f"t = {t_val};\n"
 )
 
+# ------------------------------------------------------------------
+# 📂 SIDEBAR EXPORT
+# ------------------------------------------------------------------
+st.sidebar.markdown("### 📄 Backup Tools")
+st.sidebar.download_button(
+    label="📥 Download current modifiers (simulation_input.m)",
+    data=matlab_content,
+    file_name="simulation_input.m",
+    mime="text/plain",
+    use_container_width=True
+)
+
+# ------------------------------------------------------------------
+# 🚀 LIVE RUN IN-MEMORY PIPELINE
+# ------------------------------------------------------------------
 st.markdown("---")
 if st.button("🚀 Run Cloud Simulation Engine", use_container_width=True):
     try:
-        # Save structural properties locally for compilation read triggers
-        with open("simulation_input.m", "w") as f:
-            f.write(matlab_content)
-            
-        with st.spinner("Executing simulation on cloud servers..."):
+        with st.spinner("Executing simulation context inside memory..."):
             oc = Oct2Py()
             oc.eval("addpath('.')")
             
-            # Linux server compatible headless plotting config
+            # Setup pure headless processing mode variables
             oc.eval("graphics_toolkit gnuplot")
             oc.eval("page_screen_output(0);")
             
-            # 2. FIXED CALL: Read and evaluate battle_prog directly as a script file execution
+            # Build matrices explicitly into lists of lists format
+            Sa_matrix = [
+                [p_inf_atk], [o_inf_atk if use_defender_modifiers else p_inf_atk], 
+                [p_inf_let], [o_inf_let if use_defender_modifiers else p_inf_let],
+                [p_cav_atk], [o_cav_atk if use_defender_modifiers else p_cav_atk], 
+                [p_cav_let], [o_cav_let if use_defender_modifiers else p_cav_let],
+                [p_arc_atk], [o_arc_atk if use_defender_modifiers else p_arc_atk], 
+                [p_arc_let], [o_arc_let if use_defender_modifiers else p_arc_let]
+            ]
+            Sd_matrix = [
+                [p_inf_def], [o_inf_def if use_defender_modifiers else p_inf_def], 
+                [p_inf_hp],  [o_inf_hp if use_defender_modifiers else p_inf_hp],
+                [p_cav_def], [o_cav_def if use_defender_modifiers else p_cav_def], 
+                [p_cav_hp],  [o_cav_hp if use_defender_modifiers else p_cav_hp],
+                [p_arc_def], [o_arc_def if use_defender_modifiers else p_arc_def], 
+                [p_arc_hp],  [o_arc_hp if use_defender_modifiers else p_arc_hp]
+            ]
+            
+            Inf_att_m  = [[float(p_inf)],  [float(p_inf_tier)], [float(p_inf_tg)], [1.0]]
+            Cav_att_m  = [[float(p_cav)],  [float(p_cav_tier)], [float(p_cav_tg)], [5.0]]
+            Arch_att_m = [[float(p_arch)], [float(p_arch_tier)], [float(p_arch_tg)], [9.0]]
+            
+            Inf_def_m  = [[float(o_inf)],  [float(o_inf_tier)], [float(o_inf_tg)], [1.0]]
+            Cav_def_m  = [[float(o_cav)],  [float(o_cav_tier)], [float(o_cav_tg)], [5.0]]
+            Arch_def_m = [[float(o_arch)], [float(o_arch_tier)], [float(o_arch_tg)], [9.0]]
+
+            # Inject all parameters directly to live engine session memory
+            oc.push('Sa', Sa_matrix)
+            oc.push('Sd', Sd_matrix)
+            oc.push('Inf_att', Inf_att_m)
+            oc.push('Cav_att', Cav_att_m)
+            oc.push('Arch_att', Arch_att_m)
+            oc.push('Inf_def', Inf_def_m)
+            oc.push('Cav_def', Cav_def_m)
+            oc.push('Arch_def', Arch_def_m)
+            oc.push('rally', float(rally_val))
+            oc.push('t', float(t_val))
+            
+            # Execute battle engine cleanly
             try:
                 oc.run("battle_prog.m")
-            except Exception as script_err:
-                # Fallback alternative method if Octave's engine path variable is strict
+            except Exception:
                 oc.feval("battle_prog")
             
+            # Process plot rendering mechanics
             try:
                 oc.eval("print('temp_plot.png', '-dpng', '-r150');")
                 if os.path.exists("temp_plot.png"):
@@ -241,7 +290,7 @@ if st.button("🚀 Run Cloud Simulation Engine", use_container_width=True):
             except Exception as plot_err:
                 st.warning(f"Calculations completed, but plot rendering was skipped: {plot_err}")
 
-            st.success("🎉 Simulation run finalized successfully.")
+            st.success("🎉 Simulation run finalized successfully using live memory variables.")
             oc.exit()
             
     except Exception as e:
