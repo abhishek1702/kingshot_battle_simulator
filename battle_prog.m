@@ -1,6 +1,14 @@
 ccc             %calling the clear code
 variables       %callign variables to remove clutter\
 
+% --- Add this to the very top of battle_prog.m ---
+global Sa Sd Inf_att Cav_att Arch_att Inf_def Cav_def Arch_def rally t;
+
+% Your existing script code continue below...
+% troops_stat_maker;
+
+
+
 Injury_rate = 0.35;          %add rates change when needed  
 
 %inputs stats and troops size and skills, etc.

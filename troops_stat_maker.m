@@ -1,3 +1,9 @@
+% --- Add this to the very top of troops_stat_maker.m ---
+global Sa Sd Inf_att Cav_att Arch_att Inf_def Cav_def Arch_def rally t;
+
+% Your existing script calculations continue here...
+% (Line 5 will now natively see 'Inf_att' without crashing!)
+
 troop_size = [];
 
 fprintf("********** Attacker stats ********** \n\n");

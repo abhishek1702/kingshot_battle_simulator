@@ -236,6 +236,10 @@ if st.button("🚀 Run Cloud Simulation Engine", use_container_width=True):
             oc.eval("graphics_toolkit gnuplot")
             oc.eval("page_screen_output(0);")
             
+            
+            # 1. DECLARE VARIABLES AS GLOBAL INSIDE OCTAVE BEFORE PUSHING
+            oc.eval("global Sa Sd Inf_att Cav_att Arch_att Inf_def Cav_def Arch_def rally t;")
+            
             # Build matrices explicitly into lists of lists format
             Sa_matrix = [
                 [p_inf_atk], [o_inf_atk if use_defender_modifiers else p_inf_atk], 
@@ -295,3 +299,5 @@ if st.button("🚀 Run Cloud Simulation Engine", use_container_width=True):
             
     except Exception as e:
         st.error(f"❌ Execution crashed: {e}")
+        
+        
